@@ -69,3 +69,5 @@ git push origin feature-name
 Если у вас есть вопросы или предложения, вы можете обратиться в техническую поддержку через surovov1@yandex.ru.
 
 С нетерпением жду ваших идей и предложений! Спасибо за интерес к UnitedChanger!
+
+![Logo](./icons/readmeicon.png)
