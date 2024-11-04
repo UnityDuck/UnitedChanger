@@ -72,4 +72,4 @@ git push origin feature-name
 
 С нетерпением жду ваших идей и предложений! Спасибо за интерес к UnitedChanger!
 
-![Logo](images/readmeicon.png)
+![Logo](images/ReadMeIcon.png)
