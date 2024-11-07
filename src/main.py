@@ -5,14 +5,15 @@ import validate_email
 from datetime import datetime, timedelta
 import yfinance as yf
 import pandas as pd
-from PyQt6.QtWidgets import QCheckBox
+from PyQt6.QtWidgets import QCheckBox, QLabel, QGraphicsBlurEffect
 from PyQt6.QtCore import Qt
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 from PyQt6.uic import loadUi
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QMovie
 from PyQt6 import QtCore, QtTest
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (QApplication, QDialog, QSplashScreen, QMessageBox,
                              QGraphicsScene, QVBoxLayout, QWidget)
 
@@ -255,12 +256,21 @@ class ForgotPasswordWindow(QDialog):
 class UnitedChangerMainWindow(QDialog):
     def __init__(self):
         super(QDialog, self).__init__()
+        self.loadingLabel = QLabel(self)
+        self.loadingLabel.setGeometry(QtCore.QRect(25, 25, 200, 200))
+        self.loadingLabel.setMinimumSize(QtCore.QSize(250, 250))
+        self.loadingLabel.setMaximumSize(QtCore.QSize(250, 250))
+        self.movie = QMovie("load-loading.gif")
+        self.loadingLabel.setMovie(self.movie)
+        self.loadingLabel.hide()
         self.value2Logo = None
         loadUi("../UserInterfaces/UnitedChangerMainWindow.ui", self)
         self.settingsOpener = None
+        self.previewOpener = None
         self.pixmapLogo = QPixmap("../images/MainWindowLogo.png")
         self.LogotypeLabel.setPixmap(self.pixmapLogo)
         self.settingsButton.clicked.connect(self.settingsRunner)
+        self.previewButton.clicked.connect(self.previewRunner)
         self.liked_values = []
         self.list_of_values = ["JPY (Japan)", "AUD (Australia)", "UAH (Ukraine)",
                                       "CAD (Canada)", "BYN (Belarussia)", "ILS (Israel)",
@@ -307,6 +317,12 @@ class UnitedChangerMainWindow(QDialog):
             self.liked_values.remove(self.sender().text())
         self.update_combobox_labels()
 
+    def startAnimation(self):
+        self.movie.start()
+
+    def stopAnimation(self):
+        self.movie.stop()
+
     def update_combobox_labels(self):
         for i in range(self.Value1ComboBox.count()):
             item_text = self.list_of_values[i]
@@ -342,7 +358,13 @@ class UnitedChangerMainWindow(QDialog):
         self.settingsOpener.show()
         self.close()
 
+    def previewRunner(self):
+        self.previewOpener = PreviewWindow()
+        self.previewOpener.show()
+        self.close()
+
     def checkerForAbilityValues(self):
+        self.startAnimation()
         self.list_values_combobox2 = []
         for el in self.list_of_values:
             first_value = self.Value1ComboBox.currentText().split()[0]
@@ -361,6 +383,7 @@ class UnitedChangerMainWindow(QDialog):
                     self.list_values_combobox2.append(el)
             else:
                 continue
+        self.stopAnimation()
 
     def ComboBox2ValuesChooser(self):
         if self.Value2ComboBox.currentText():
@@ -418,6 +441,18 @@ class UnitedChangerMainWindow(QDialog):
             self.labelValue1.setText(f"1 {first_value}")
             self.labelValue2.setText(f"{CurrencyConverter(first_value).convertValues(second_value)} {second_value}")
             self.reverseCounter *= -1
+        self.loadingLabel.show()
+
+
+class PreviewWindow(QDialog):
+    def __init__(self):
+        super(QDialog, self).__init__()
+        loadUi("../UserInterfaces/PreviewWindow.ui")
+        self.UnitedMainReopener = None
+
+    def closeEvent(self, event):
+        self.UnitedMainReopener = UnitedChangerMainWindow()
+        self.UnitedMainReopener.show()
 
 
 class SettingWindow(QDialog):

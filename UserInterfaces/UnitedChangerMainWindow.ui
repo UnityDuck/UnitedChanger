@@ -294,7 +294,7 @@ border: 1px solid black;</string>
   <widget class="QPushButton" name="LikedInCsvButton">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>270</x>
      <y>210</y>
      <width>211</width>
      <height>71</height>
@@ -310,7 +310,7 @@ border: 1px solid black;</string>
   <widget class="QLineEdit" name="FilenameLine">
    <property name="geometry">
     <rect>
-     <x>610</x>
+     <x>490</x>
      <y>210</y>
      <width>201</width>
      <height>71</height>
@@ -336,7 +336,7 @@ font-size: 20px;</string>
     <rect>
      <x>270</x>
      <y>110</y>
-     <width>131</width>
+     <width>101</width>
      <height>61</height>
     </rect>
    </property>
@@ -370,9 +370,9 @@ font-size: 20px;</string>
   <widget class="QComboBox" name="Converter1ComboBox">
    <property name="geometry">
     <rect>
-     <x>410</x>
+     <x>380</x>
      <y>110</y>
-     <width>111</width>
+     <width>141</width>
      <height>61</height>
     </rect>
    </property>
@@ -417,6 +417,22 @@ border-radius: 4px;
 </string>
    </property>
   </widget>
+  <widget class="QPushButton" name="previewButton">
+   <property name="geometry">
+    <rect>
+     <x>700</x>
+     <y>210</y>
+     <width>181</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border-radius: 20px; background-color: white; border: 1px solid black; font-size: 18px;</string>
+   </property>
+   <property name="text">
+    <string>Preview</string>
+   </property>
+  </widget>
   <zorder>Value1ComboBox</zorder>
   <zorder>Value2ComboBox</zorder>
   <zorder>LogotypeLabel</zorder>
@@ -439,6 +455,7 @@ border-radius: 4px;
   <zorder>Converter1ComboBox</zorder>
   <zorder>ConvertButton</zorder>
   <zorder>Converter2ComboBox</zorder>
+  <zorder>previewButton</zorder>
  </widget>
  <resources/>
  <connections/>
