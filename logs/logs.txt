@@ -1,1 +1,17 @@
-2024-11-04 09:40:55.377574; Error-code: 3. Exception: IncorrectInput.
+2024-11-12 00:00:03.215466; Error-code: 2. Exception: EmptyInput.
+2024-11-12 00:00:11.652710; Error-code: 0. Exception: DifferentPasswords.
+2024-11-12 00:05:52.949796; Error-code: 2. Exception: EmptyInput.
+2024-11-12 00:18:51.440111; Error-code: 3. Exception: IncorrectInput.
+2024-11-12 00:24:09.366637; Error-code: 3. Exception: IncorrectInput.
+2024-11-12 00:40:06.157205; Error-code: 3. Exception: IncorrectInput.
+2024-11-12 00:40:14.037580; surovov1@yandex.ru registered.
+2024-11-12 00:40:28.239955; surovov1@yandex.ru entered.
+2024-11-12 00:46:47.274329; surovov1@yandex.ru entered.
+2024-11-12 00:49:30.465931; surovov1@yandex.ru entered.
+2024-11-12 00:55:31.891492; tttt@mail.ru registered.
+2024-11-12 00:58:25.189664; yyy@mail.ru registered.
+2024-11-12 00:59:08.442083; rrr@mail.ru registered.
+2024-11-12 00:59:42.096875; mmm@mail.ru registered.
+2024-11-12 01:00:10.109198; uuu@mail.ru registered.
+2024-11-12 01:00:42.458068; surovov1@yandex.ru registered.
+2024-11-12 01:01:08.499616; fff@mail.ru registered.

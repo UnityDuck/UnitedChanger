@@ -417,7 +417,7 @@ border-radius: 4px;
 </string>
    </property>
   </widget>
-  <widget class="QPushButton" name="previewButton">
+  <widget class="QPushButton" name="viewButton">
    <property name="geometry">
     <rect>
      <x>700</x>
@@ -430,7 +430,7 @@ border-radius: 4px;
     <string notr="true">border-radius: 20px; background-color: white; border: 1px solid black; font-size: 18px;</string>
    </property>
    <property name="text">
-    <string>Preview</string>
+    <string>View CSV</string>
    </property>
   </widget>
   <zorder>Value1ComboBox</zorder>
@@ -455,7 +455,7 @@ border-radius: 4px;
   <zorder>Converter1ComboBox</zorder>
   <zorder>ConvertButton</zorder>
   <zorder>Converter2ComboBox</zorder>
-  <zorder>previewButton</zorder>
+  <zorder>viewButton</zorder>
  </widget>
  <resources/>
  <connections/>

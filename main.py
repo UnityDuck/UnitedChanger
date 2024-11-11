@@ -1,19 +1,23 @@
 import sys
 import sqlite3
+import time
+from templates import *
 import requests
 import validate_email
 from datetime import datetime, timedelta
 import yfinance as yf
 import pandas as pd
-from PyQt6.QtWidgets import QCheckBox, QLabel, QGraphicsBlurEffect
+from PyQt6.QtWidgets import QCheckBox, QLabel, QTableWidgetItem, QHeaderView
 from PyQt6.QtCore import Qt
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
-from PyQt6.uic import loadUi
+from PyQt6 import uic
+import io
 from PyQt6.QtGui import QPixmap, QMovie
 from PyQt6 import QtCore, QtTest
-from PyQt6.QtCore import QThread, pyqtSignal
+from concurrent.futures import ThreadPoolExecutor
+import csv
 from PyQt6.QtWidgets import (QApplication, QDialog, QSplashScreen, QMessageBox,
                              QGraphicsScene, QVBoxLayout, QWidget)
 
@@ -37,8 +41,8 @@ class CurrencyConverter:
 
 
 def logsSaver(ErrorStatus, ErrorMessage):
-    with open("../logs/logs.txt", mode="w", encoding="UTF-8") as file:
-        file.write(f"{datetime.now()}; Error-code: {ErrorStatus}. Exception: {ErrorMessage}.")
+    with open("logs/logs.txt", mode="a", encoding="UTF-8") as file:
+        file.write(f"{datetime.now()}; Error-code: {ErrorStatus}. Exception: {ErrorMessage}.\n")
 
 
 class DifferentPasswords(Exception):
@@ -72,14 +76,15 @@ class IncorrectData(Exception):
 class ProgressBarWindow(QSplashScreen):
     def __init__(self):
         super(QSplashScreen, self).__init__()
-        loadUi("../UserInterfaces/ProgressBarWindow.ui", self)
+        file = io.StringIO(ProgressBarWindowTemplate)
+        uic.loadUi(file, self)
         self.time_for_sleep = 0
         self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowFlag(QtCore.Qt.WindowType.FramelessWindowHint)
         self.setDisabled(True)
-        self.pixmapBackground = QPixmap("../images/splashGradient2.png")
+        self.pixmapBackground = QPixmap("images/splashGradient2.png")
         self.setPixmap(self.pixmapBackground)
-        self.pixmapLogo = QPixmap("../images/splashLogo.png")
+        self.pixmapLogo = QPixmap("images/splashLogo.png")
         self.labelLogo.setPixmap(self.pixmapLogo)
 
     def progressBarChanger(self):
@@ -98,12 +103,13 @@ class ProgressBarWindow(QSplashScreen):
 class LoginWindow(QDialog):
     def __init__(self):
         super(QDialog, self).__init__()
-        loadUi("../UserInterfaces/LoginWindow.ui", self)
+        file = io.StringIO(LoginWindowTemplate)
+        uic.loadUi(file, self)
         self.registrationProcess = None
         self.runRememberingProcess = None
         self.mainUnitedChanger = None
         self.setWindowTitle("Login to UnitedChanger")
-        self.pixmapLogo = QPixmap("../images/LoginWindowLogo.png")
+        self.pixmapLogo = QPixmap("images/LoginWindowLogo.png")
         self.LabelLogo.setPixmap(self.pixmapLogo)
         self.RegistrationButton.clicked.connect(self.runRegisterWindow)
         self.ForgotPasswordButton.clicked.connect(self.runForgotPasswordWindow)
@@ -127,7 +133,7 @@ class LoginWindow(QDialog):
         try:
             if not all([self.LoginLine.text(), self.PasswordLine.text()]):
                 raise FieldsAreNotFilled
-            conn = sqlite3.connect("../databases/users.sqlite")
+            conn = sqlite3.connect("databases/users.sqlite")
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM users_table")
             data = cursor.fetchall()
@@ -141,6 +147,8 @@ class LoginWindow(QDialog):
                 raise NotValidEmail
             if login not in logins or password not in passwords or logins.index(login) != passwords.index(password):
                 raise IncorrectData
+            with open("logs/logs.txt", mode="a", encoding="UTF-8") as file:
+                file.write(f"{datetime.now()}; {login} entered.\n")
             self.loginSuccess()
         except FieldsAreNotFilled:
             self.criticalLoginWindowCaller("Empty data", "You must fill in all the windows.")
@@ -162,12 +170,29 @@ class LoginWindow(QDialog):
 class RegisterWindow(QDialog):
     def __init__(self):
         super(QDialog, self).__init__()
-        loadUi("../UserInterfaces/RegisterWindow.ui", self)
+        file = io.StringIO(RegisterWindowTemplate)
+        uic.loadUi(file, self)
         self.LoginWindowReopener = None
-        self.id = 1
         self.CriticalError = "CriticalError"
         self.setWindowTitle("Registration")
         self.RegisterButton.clicked.connect(self.registration)
+
+    @staticmethod
+    def lastIdReturner(name):
+        connection = sqlite3.connect('databases/users.sqlite')
+        cursor = connection.cursor()
+        try:
+            cursor.execute(f"SELECT {name} FROM users_table ORDER BY {name} DESC LIMIT 1")
+            last_id = cursor.fetchone()
+            if last_id is not None:
+                last_id_value = int(last_id[0])
+            else:
+                print("Таблица пуста, нет элементов.")
+                return
+        finally:
+            cursor.close()
+            connection.close()
+        return last_id_value + 1
 
     def zeroMaker(self):
         self.PasswordEntery.setText("")
@@ -182,15 +207,23 @@ class RegisterWindow(QDialog):
                 raise NotValidEmail
             if not self.PasswordEntery.text() == self.PasswordEnteryAgain.text():
                 raise DifferentPasswords
-            conn = sqlite3.connect("../databases/users.sqlite")
+            conn = sqlite3.connect("databases/users.sqlite")
             cursor = conn.cursor()
             login = self.LoginEntery.text()
             password = self.PasswordEntery.text()
+            id_now = self.lastIdReturner("id")
             cursor.execute("INSERT INTO users_table (id, login, password) VALUES (?, ?, ?)",
-                           (self.id, login, password))
+                           (id_now, login, password))
+            with open("logs/logs.txt", mode="a", encoding="UTF-8") as file:
+                file.write(f"{datetime.now()}; {login} registered.\n")
             conn.commit()
             conn.close()
-            self.id += 1
+            connFavoriteId = sqlite3.connect("databases/users.sqlite")
+            cursorFavoriteId = connFavoriteId.cursor()
+            cursorFavoriteId.execute("INSERT INTO favorite_values (id, favoriteValues) VALUES (?, ?)",
+                           (id_now, "null"))
+            connFavoriteId.commit()
+            connFavoriteId.close()
             QMessageBox.about(self, "RegistrationEnding", "Registration is completed!")
             self.zeroMaker()
         except FieldsAreNotFilled:
@@ -212,7 +245,8 @@ class RegisterWindow(QDialog):
 class ForgotPasswordWindow(QDialog):
     def __init__(self):
         super(QDialog, self).__init__()
-        loadUi("../UserInterfaces/ForgotPasswordWindow.ui", self)
+        file = io.StringIO(ForgotPasswordWindowTemplate)
+        uic.loadUi(file, self)
         self.LoginWindowReopener = None
         self.setWindowTitle("Don't forget you password again =)")
         self.TimeLabel.hide()
@@ -256,21 +290,16 @@ class ForgotPasswordWindow(QDialog):
 class UnitedChangerMainWindow(QDialog):
     def __init__(self):
         super(QDialog, self).__init__()
-        self.loadingLabel = QLabel(self)
-        self.loadingLabel.setGeometry(QtCore.QRect(25, 25, 200, 200))
-        self.loadingLabel.setMinimumSize(QtCore.QSize(250, 250))
-        self.loadingLabel.setMaximumSize(QtCore.QSize(250, 250))
-        self.movie = QMovie("load-loading.gif")
-        self.loadingLabel.setMovie(self.movie)
-        self.loadingLabel.hide()
+        file = io.StringIO(UnitedChangerMainWindowTemplate)
+        uic.loadUi(file, self)
         self.value2Logo = None
-        loadUi("../UserInterfaces/UnitedChangerMainWindow.ui", self)
         self.settingsOpener = None
-        self.previewOpener = None
-        self.pixmapLogo = QPixmap("../images/MainWindowLogo.png")
+        self.viewOpener = None
+        self.loadingOpener = None
+        self.pixmapLogo = QPixmap("images/MainWindowLogo.png")
         self.LogotypeLabel.setPixmap(self.pixmapLogo)
         self.settingsButton.clicked.connect(self.settingsRunner)
-        self.previewButton.clicked.connect(self.previewRunner)
+        self.viewButton.clicked.connect(self.viewRunner)
         self.liked_values = []
         self.list_of_values = ["JPY (Japan)", "AUD (Australia)", "UAH (Ukraine)",
                                       "CAD (Canada)", "BYN (Belarussia)", "ILS (Israel)",
@@ -281,7 +310,7 @@ class UnitedChangerMainWindow(QDialog):
         self.reverseCounter = 1
         self.checkerForAbilityValues()
         self.Value2ComboBox.addItems(self.list_values_combobox2)
-        self.value1Logo = QPixmap(f"../flags/{self.Value1ComboBox.currentText().split()[0]}.png")
+        self.value1Logo = QPixmap(f"flags/{self.Value1ComboBox.currentText().split()[0]}.png")
         self.Value1Flag.setPixmap(self.value1Logo)
         self.Value1Flag.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.labelValue1.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -299,29 +328,64 @@ class UnitedChangerMainWindow(QDialog):
         self.scrollArea.setWidget(self.checkbox_container)
         self.Converter1ComboBox.addItems(self.list_of_values)
         self.Converter2ComboBox.addItems(self.list_of_values)
-        # self.converter2ComboBoxChanger()
         self.update_combobox_labels()
         self.ConvertButton.clicked.connect(self.globalConverter)
         self.ConvertationResult.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    #     self.Converter1ComboBox.itemChanged.connect(self.converter2ComboBoxChanger)
-    #
-    # def converter2ComboBoxChanger(self):
-    #     self.Converter2ComboBox.clear()
-    #     self.Converter2ComboBox.addItems([el for el in self.list_of_values if
-    #                                       el != self.Converter1ComboBox.currentText()])
+        self.LikedInCsvButton.clicked.connect(self.csvLikedSaver)
+
+    def csvLikedSaver(self):
+        try:
+            if not self.FilenameLine.text():
+                raise FieldsAreNotFilled
+            currencies = [el.split()[0] for el in self.liked_values]
+            def get_exchange_rate(base, target):
+                url = f"https://api.coinbase.com/v2/prices/{base}-{target}/spot"
+                response = requests.get(url)
+                if response.status_code == 200:
+                    return base, target, float(response.json()['data']['amount'])
+                else:
+                    print(f"Error fetching data for {base}-{target}")
+                    return base, target, None
+            data = {base: {target: None for target in currencies} for base in currencies}
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                tasks = []
+                for base in currencies:
+                    for target in currencies:
+                        if base != target:
+                            tasks.append((base, target))
+                for base, target, rate in executor.map(lambda args: get_exchange_rate(*args), tasks):
+                    data[base][target] = rate
+            for base in currencies:
+                data[base][base] = 1.0
+            filename = self.FilenameLine.text().replace(" ", "")
+            if filename[-4::] != ".csv":
+                filename += ".csv"
+            with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Value"] + currencies)
+                for base in currencies:
+                    row = [base]
+                    for target in currencies:
+                        rate = data[base][target]
+                        if rate is not None:
+                            row.append(round(rate, 6))
+                        else:
+                            row.append('N/A')
+                    writer.writerow(row)
+            QMessageBox.about(self, "Completing", "Process completed!")
+        except FieldsAreNotFilled:
+            QMessageBox.critical(self, "Error", "You should fill Filename label!")
 
     def update_selected_options(self):
         if self.sender().isChecked():
             self.liked_values.append(self.sender().text())
+            connFavoriteId = sqlite3.connect("databases/users.sqlite")
+            cursorFavoriteId = connFavoriteId.cursor()
+            cursorFavoriteId.execute("INSERT INTO favorite_values (favoriteId, favoriteValues) VALUES (?, ?)",
+                                     (self.lastIdReturner("favoriteId"), ""))
         else:
             self.liked_values.remove(self.sender().text())
         self.update_combobox_labels()
-
-    def startAnimation(self):
-        self.movie.start()
-
-    def stopAnimation(self):
-        self.movie.stop()
 
     def update_combobox_labels(self):
         for i in range(self.Value1ComboBox.count()):
@@ -358,13 +422,15 @@ class UnitedChangerMainWindow(QDialog):
         self.settingsOpener.show()
         self.close()
 
-    def previewRunner(self):
-        self.previewOpener = PreviewWindow()
-        self.previewOpener.show()
-        self.close()
+    def viewRunner(self):
+        if self.FilenameLine.text():
+            self.viewOpener = ViewWindow(self.FilenameLine.text())
+            self.viewOpener.show()
+            self.close()
+        else:
+            QMessageBox.critical(self, "Error", "You should fill Filename label!")
 
     def checkerForAbilityValues(self):
-        self.startAnimation()
         self.list_values_combobox2 = []
         for el in self.list_of_values:
             first_value = self.Value1ComboBox.currentText().split()[0]
@@ -383,19 +449,25 @@ class UnitedChangerMainWindow(QDialog):
                     self.list_values_combobox2.append(el)
             else:
                 continue
-        self.stopAnimation()
 
     def ComboBox2ValuesChooser(self):
         if self.Value2ComboBox.currentText():
-            self.value1Logo = QPixmap(f"../flags/{self.Value1ComboBox.currentText().split()[0]}.png")
+            self.loadingOpener = LoadingWindow()
+            self.loadingOpener.show()
+            self.hide()
+            QtTest.QTest.qWait(2000)
+            self.value1Logo = QPixmap(f"flags/{self.Value1ComboBox.currentText().split()[0]}.png")
             self.Value1Flag.setPixmap(self.value1Logo)
             self.Value2ComboBox.clear()
             self.checkerForAbilityValues()
             self.Value2ComboBox.addItems(self.list_values_combobox2)
+            QtTest.QTest.qWait(2000)
+            self.show()
+            self.loadingOpener.close()
 
     def CurrencyTurner(self):
         if self.Value2ComboBox.currentText():
-            self.value2Logo = QPixmap(f"../flags/{self.Value2ComboBox.currentText().split()[0]}.png")
+            self.value2Logo = QPixmap(f"flags/{self.Value2ComboBox.currentText().split()[0]}.png")
             self.Value2Flag.setPixmap(self.value2Logo)
             self.Value2Flag.setAlignment(Qt.AlignmentFlag.AlignCenter)
             scene = QGraphicsScene()
@@ -418,7 +490,7 @@ class UnitedChangerMainWindow(QDialog):
             candlestick_ohlc(ax, ohlc.values, width=0.6, colorup='green', colordown='red', alpha=0.8)
             ax.set_xlabel('Date')
             ax.set_ylabel('Price')
-            ax.set_title(f'График курса {pair}')
+            ax.set_title(f'Graphics {pair}')
             date_format = mpl_dates.DateFormatter('%d-%m-%Y')
             ax.xaxis.set_major_formatter(date_format)
             fig.autofmt_xdate()
@@ -441,14 +513,33 @@ class UnitedChangerMainWindow(QDialog):
             self.labelValue1.setText(f"1 {first_value}")
             self.labelValue2.setText(f"{CurrencyConverter(first_value).convertValues(second_value)} {second_value}")
             self.reverseCounter *= -1
-        self.loadingLabel.show()
 
 
-class PreviewWindow(QDialog):
-    def __init__(self):
-        super(QDialog, self).__init__()
-        loadUi("../UserInterfaces/PreviewWindow.ui")
-        self.UnitedMainReopener = None
+class ViewWindow(QDialog):
+    def __init__(self, filename):
+        try:
+            super(QDialog, self).__init__()
+            file = io.StringIO(ViewWindowTemplate)
+            uic.loadUi(file, self)
+            self.UnitedMainReopener = None
+            if filename[-4::] != ".csv":
+                filename += ".csv"
+            with open(filename, 'r', encoding='utf-8') as file:
+                reader = csv.reader(file, delimiter=';')
+                data = list(reader)
+            self.UnitedMainReopener = None
+            self.ViewTable.setColumnCount(
+               len(data[0]))
+            self.ViewTable.setRowCount(len(data))
+            for row_index, row_data in enumerate(data):
+                for col_index, cell_data in enumerate(row_data):
+                    item = QTableWidgetItem(cell_data)
+                    self.ViewTable.setItem(row_index, col_index, item)
+            header = self.ViewTable.horizontalHeader()
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+            self.ViewTable.resizeRowsToContents()
+        except Exception as error:
+            print(error)
 
     def closeEvent(self, event):
         self.UnitedMainReopener = UnitedChangerMainWindow()
@@ -458,12 +549,26 @@ class PreviewWindow(QDialog):
 class SettingWindow(QDialog):
     def __init__(self):
         super(QDialog, self).__init__()
-        loadUi("../UserInterfaces/SettingWindow.ui")
+        file = io.StringIO(SettingWindowTemplate)
+        uic.loadUi(file, self)
         self.UnitedMainReopener = None
 
     def closeEvent(self, event):
         self.UnitedMainReopener = UnitedChangerMainWindow()
         self.UnitedMainReopener.show()
+
+
+class LoadingWindow(QDialog):
+    def __init__(self):
+        super(QDialog, self).__init__()
+        file = io.StringIO(LoadingWindowTemplate)
+        uic.loadUi(file, self)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlag(QtCore.Qt.WindowType.FramelessWindowHint)
+        self.setDisabled(True)
+        self.movie = QMovie("load-loading.gif")
+        self.loadingGifLabel.setMovie(self.movie)
+        self.movie.start()
 
 
 if __name__ == "__main__":
