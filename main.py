@@ -378,16 +378,20 @@ class UnitedChangerMainWindow(QDialog):
     def update_selected_options(self):
         if self.sender().isChecked():
             self.liked_values.append(self.sender().text())
-            connFavoriteId = sqlite3.connect("databases/users.sqlite")
-            cursorFavoriteId = connFavoriteId.cursor()
-            cursorFavoriteId.execute("INSERT INTO favorite_values (favoriteId, favoriteValues) VALUES (?, ?)",
-                                     (self.lastIdReturner("favoriteId"), ""))
+            # connFavoriteId = sqlite3.connect("databases/users.sqlite")
+            # cursorFavoriteId = connFavoriteId.cursor()
+            # print(1)
+            # print(", ".join(self.liked_values))
+            # cursorFavoriteId.execute("INSERT INTO favorite_values (id, favoriteValues) VALUES (?, ?)",
+            #                          (1, ", ".join(self.liked_values)))
+            # print(2)
+            # connFavoriteId.commit()
+            # connFavoriteId.close()
         else:
             self.liked_values.remove(self.sender().text())
         self.update_combobox_labels()
 
     def update_combobox_labels(self):
-        print(1)
         for i in range(self.Value1ComboBox.count()):
             item_text = self.list_of_values[i]
             if item_text in self.liked_values:
@@ -412,7 +416,6 @@ class UnitedChangerMainWindow(QDialog):
                 self.Converter2ComboBox.setItemText(i, f"{item_text} ★")
             else:
                 self.Converter2ComboBox.setItemText(i, item_text)
-        print(2)
 
     def globalConverter(self):
         self.ConvertationResult.setText(str(CurrencyConverter(self.Converter1ComboBox.currentText().split()[0]).
