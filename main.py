@@ -1,13 +1,12 @@
 import sys
 import sqlite3
-import time
 from templates import *
 import requests
 import validate_email
 from datetime import datetime, timedelta
 import yfinance as yf
 import pandas as pd
-from PyQt6.QtWidgets import QCheckBox, QLabel, QTableWidgetItem, QHeaderView
+from PyQt6.QtWidgets import QCheckBox, QTableWidgetItem, QHeaderView
 from PyQt6.QtCore import Qt
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
@@ -388,6 +387,7 @@ class UnitedChangerMainWindow(QDialog):
         self.update_combobox_labels()
 
     def update_combobox_labels(self):
+        print(1)
         for i in range(self.Value1ComboBox.count()):
             item_text = self.list_of_values[i]
             if item_text in self.liked_values:
@@ -412,6 +412,7 @@ class UnitedChangerMainWindow(QDialog):
                 self.Converter2ComboBox.setItemText(i, f"{item_text} ★")
             else:
                 self.Converter2ComboBox.setItemText(i, item_text)
+        print(2)
 
     def globalConverter(self):
         self.ConvertationResult.setText(str(CurrencyConverter(self.Converter1ComboBox.currentText().split()[0]).
