@@ -52,5 +52,6 @@ UnitedChanger
 Укороченная ссылка: https://bit.ly/3YeJWxy
 Запасная ссылка: https://www.figma.com/design/W6GYqsuIY2nzg4J34SxQf9/Суровов-Александр-Александрович's-team-library?node-id=0-1&node-type=canvas&t=X1OnsjOsBB45J1Uf-0
 Подробности функционала программы указаны в комментариях в проекте figma.
+Работу с криптовалютами можете оставить в виде дополнения на будущее.
 
 Удачи в выполнении проекта!

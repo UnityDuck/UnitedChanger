@@ -19,9 +19,9 @@
   <widget class="QLabel" name="LabelSettings">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>10</x>
      <y>20</y>
-     <width>181</width>
+     <width>231</width>
      <height>71</height>
     </rect>
    </property>
@@ -32,10 +32,10 @@
     <string notr="true">font-size: 48px;</string>
    </property>
    <property name="text">
-    <string>Settings</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:29pt;&quot;&gt;Settings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QLabel" name="LabelPixmap">
+  <widget class="QLabel" name="LogoLabel">
    <property name="geometry">
     <rect>
      <x>250</x>
@@ -52,7 +52,7 @@ border-radius: 10px;</string>
     <string/>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox">
+  <widget class="QComboBox" name="Value1Combobox">
    <property name="geometry">
     <rect>
      <x>90</x>
@@ -68,7 +68,7 @@ font-size: 18px;
 border: 1px solid black;</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_2">
+  <widget class="QComboBox" name="Value2Combobox">
    <property name="geometry">
     <rect>
      <x>380</x>
@@ -84,7 +84,7 @@ font-size: 18px;
 border: 1px solid black;</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_3">
+  <widget class="QComboBox" name="Sign1Combobox">
    <property name="geometry">
     <rect>
      <x>290</x>
@@ -100,12 +100,12 @@ font-size: 18px;
 border: 1px solid black;</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_4">
+  <widget class="QComboBox" name="Value3Combobox">
    <property name="geometry">
     <rect>
      <x>90</x>
      <y>190</y>
-     <width>181</width>
+     <width>141</width>
      <height>51</height>
     </rect>
    </property>
@@ -116,10 +116,10 @@ font-size: 18px;
 border: 1px solid black;</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_6">
+  <widget class="QComboBox" name="Sign2Combobox">
    <property name="geometry">
     <rect>
-     <x>290</x>
+     <x>240</x>
      <y>190</y>
      <width>71</width>
      <height>51</height>
@@ -132,10 +132,10 @@ font-size: 18px;
 border: 1px solid black;</string>
    </property>
   </widget>
-  <widget class="QSpinBox" name="spinBox">
+  <widget class="QSpinBox" name="ValueSpinBox">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>330</x>
      <y>190</y>
      <width>71</width>
      <height>51</height>
@@ -177,7 +177,7 @@ border: 1px solid black;</string>
     <string>If</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="CompleteButton">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -195,7 +195,7 @@ border: 1px solid black;</string>
     <string>Complete</string>
    </property>
   </widget>
-  <widget class="QRadioButton" name="radioButton">
+  <widget class="QRadioButton" name="CriticalRadio">
    <property name="geometry">
     <rect>
      <x>580</x>
@@ -208,10 +208,10 @@ border: 1px solid black;</string>
     <string notr="true">font-size: 15px;</string>
    </property>
    <property name="text">
-    <string>RadioButton</string>
+    <string>Critical</string>
    </property>
   </widget>
-  <widget class="QRadioButton" name="radioButton_2">
+  <widget class="QRadioButton" name="WarningRadio">
    <property name="geometry">
     <rect>
      <x>580</x>
@@ -224,10 +224,10 @@ border: 1px solid black;</string>
     <string notr="true">font-size: 15px;</string>
    </property>
    <property name="text">
-    <string>RadioButton</string>
+    <string>Warning</string>
    </property>
   </widget>
-  <widget class="QRadioButton" name="radioButton_3">
+  <widget class="QRadioButton" name="InfoRadio">
    <property name="geometry">
     <rect>
      <x>580</x>
@@ -240,7 +240,7 @@ border: 1px solid black;</string>
     <string notr="true">font-size: 15px;</string>
    </property>
    <property name="text">
-    <string>RadioButton</string>
+    <string>Info</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -248,7 +248,7 @@ border: 1px solid black;</string>
     <rect>
      <x>570</x>
      <y>110</y>
-     <width>131</width>
+     <width>141</width>
      <height>51</height>
     </rect>
    </property>
@@ -261,12 +261,12 @@ font-size: 16px;</string>
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Message Settings&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_5">
+  <widget class="QComboBox" name="Value4Combobox">
    <property name="geometry">
     <rect>
-     <x>460</x>
+     <x>410</x>
      <y>190</y>
-     <width>91</width>
+     <width>141</width>
      <height>51</height>
     </rect>
    </property>

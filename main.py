@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import yfinance as yf
 import pandas as pd
 from PyQt6.QtWidgets import QCheckBox, QTableWidgetItem, QHeaderView
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
@@ -19,6 +19,8 @@ from concurrent.futures import ThreadPoolExecutor
 import csv
 from PyQt6.QtWidgets import (QApplication, QDialog, QSplashScreen, QMessageBox,
                              QGraphicsScene, QVBoxLayout, QWidget)
+
+USERNAME = ""
 
 
 class CurrencyConverter:
@@ -69,6 +71,20 @@ class IncorrectData(Exception):
     def __init__(self):
         self.errorStatus = "3"
         self.errorMessage = "IncorrectInput"
+        logsSaver(self.errorStatus, self.errorMessage)
+
+
+class NoAvailableAccounts(Exception):
+    def __init__(self):
+        self.errorStatus = "4"
+        self.errorMessage = "NoAccountsAreAvailable"
+        logsSaver(self.errorStatus, self.errorMessage)
+
+
+class AccountAlreadyExistsError(Exception):
+    def __init__(self):
+        self.errorStatus = "5"
+        self.errorMessage = "AccountAlreadyExists"
         logsSaver(self.errorStatus, self.errorMessage)
 
 
@@ -130,21 +146,36 @@ class LoginWindow(QDialog):
 
     def loginProcess(self):
         try:
+            conn = sqlite3.connect("databases/users.sqlite")
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT id FROM users_table DISC")
+            last_id = cursor.fetchall()
+            conn.commit()
+            conn.close()
+            if last_id[-1] == 0:
+                raise NoAvailableAccounts
             if not all([self.LoginLine.text(), self.PasswordLine.text()]):
                 raise FieldsAreNotFilled
             conn = sqlite3.connect("databases/users.sqlite")
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users_table")
-            data = cursor.fetchall()
-            logins = [el[1] for el in data]
-            passwords = [el[2] for el in data]
+            cursor.execute(f"SELECT login FROM users_table")
+            logins_loaded = cursor.fetchall()
+            conn.commit()
+            conn.close()
+            logins = []
+            for el in logins_loaded:
+                logins.append(el[0])
+            conn = sqlite3.connect("databases/users.sqlite")
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT password FROM users_table WHERE login='{self.LoginLine.text()}'")
+            password = cursor.fetchall()[0]
             conn.commit()
             conn.close()
             login = self.LoginLine.text()
-            password = self.PasswordLine.text()
+            password_entered = self.PasswordLine.text()
             if not validate_email.validate_email(login):
                 raise NotValidEmail
-            if login not in logins or password not in passwords or logins.index(login) != passwords.index(password):
+            if login not in logins or password_entered != password[0]:
                 raise IncorrectData
             with open("logs/logs.txt", mode="a", encoding="UTF-8") as file:
                 file.write(f"{datetime.now()}; {login} entered.\n")
@@ -155,12 +186,16 @@ class LoginWindow(QDialog):
             self.criticalLoginWindowCaller("Invalid login/password", "Your login/password is incorrect.")
         except NotValidEmail:
             self.criticalLoginWindowCaller("Invalid email", "Email is not valid.")
+        except NoAvailableAccounts:
+            self.criticalLoginWindowCaller("No accounts", "No accounts are available.")
 
     def criticalLoginWindowCaller(self, title, text):
         QMessageBox.critical(self, title, text)
         self.zeroMaker()
 
     def loginSuccess(self):
+        global USERNAME
+        USERNAME = self.LoginLine.text()
         self.mainUnitedChanger = UnitedChangerMainWindow()
         self.mainUnitedChanger.show()
         self.close()
@@ -200,6 +235,11 @@ class RegisterWindow(QDialog):
 
     def registration(self):
         try:
+            connChecker = sqlite3.connect("databases/users.sqlite")
+            cursorChecker = connChecker.cursor()
+            logins = cursorChecker.execute("""SELECT login FROM users_table""").fetchall()
+            connChecker.commit()
+            connChecker.close()
             if not all([self.PasswordEntery.text(), self.PasswordEnteryAgain.text(), self.LoginEntery.text()]):
                 raise FieldsAreNotFilled
             if not validate_email.validate_email(self.LoginEntery.text()):
@@ -209,6 +249,8 @@ class RegisterWindow(QDialog):
             conn = sqlite3.connect("databases/users.sqlite")
             cursor = conn.cursor()
             login = self.LoginEntery.text()
+            if login in [el[0] for el in logins]:
+                raise AccountAlreadyExistsError
             password = self.PasswordEntery.text()
             id_now = self.lastIdReturner("id")
             cursor.execute("INSERT INTO users_table (id, login, password) VALUES (?, ?, ?)",
@@ -219,8 +261,8 @@ class RegisterWindow(QDialog):
             conn.close()
             connFavoriteId = sqlite3.connect("databases/users.sqlite")
             cursorFavoriteId = connFavoriteId.cursor()
-            cursorFavoriteId.execute("INSERT INTO favorite_values (id, favoriteValues) VALUES (?, ?)",
-                           (id_now, "null"))
+            cursorFavoriteId.execute("INSERT INTO favorite_values_table (id, favoriteValues) VALUES (?, ?)",
+                                     (id_now, ""))
             connFavoriteId.commit()
             connFavoriteId.close()
             QMessageBox.about(self, "RegistrationEnding", "Registration is completed!")
@@ -231,6 +273,8 @@ class RegisterWindow(QDialog):
             self.criticalRegisterWindowCaller("DifferentPasswords", "Your passwords are different.")
         except NotValidEmail:
             self.criticalRegisterWindowCaller("Invalid data", "Email is not valid.")
+        except AccountAlreadyExistsError:
+            self.criticalRegisterWindowCaller("Account error", "Account already exists.")
 
     def criticalRegisterWindowCaller(self, title, text):
         QMessageBox.critical(self, title, text)
@@ -288,22 +332,32 @@ class ForgotPasswordWindow(QDialog):
 
 class UnitedChangerMainWindow(QDialog):
     def __init__(self):
+        global USERNAME
         super(QDialog, self).__init__()
         file = io.StringIO(UnitedChangerMainWindowTemplate)
         uic.loadUi(file, self)
         self.value2Logo = None
-        self.settingsOpener = None
         self.viewOpener = None
         self.loadingOpener = None
         self.pixmapLogo = QPixmap("images/MainWindowLogo.png")
         self.LogotypeLabel.setPixmap(self.pixmapLogo)
-        self.settingsButton.clicked.connect(self.settingsRunner)
         self.viewButton.clicked.connect(self.viewRunner)
-        self.liked_values = []
+        conn = sqlite3.connect('databases/users.sqlite')
+        cursor = conn.cursor()
+        cursor.execute(f"""SELECT id FROM users_table WHERE login='{USERNAME}'""")
+        self.id = cursor.fetchone()[0]
+        conn.commit()
+        conn.close()
+        conn = sqlite3.connect('databases/users.sqlite')
+        cursor = conn.cursor()
+        cursor.execute(f"""SELECT favoriteValues FROM favorite_values_table WHERE id={self.id}""")
+        self.liked_values = cursor.fetchall()[0][0].split(", ")
+        conn.commit()
+        conn.close()
         self.list_of_values = ["JPY (Japan)", "AUD (Australia)", "UAH (Ukraine)",
-                                      "CAD (Canada)", "BYN (Belarussia)", "ILS (Israel)",
-                                      "AED (UAE)", "RSD (Serbia)", "GBP (Britain)",
-                                      "RUB (Russia)", "EUR (Europe)", "USD (USA)", "KZT (Kazakhstan)"]
+                               "CAD (Canada)", "BYN (Belarussia)", "ILS (Israel)",
+                               "AED (UAE)", "RSD (Serbia)", "GBP (Britain)",
+                               "RUB (Russia)", "EUR (Europe)", "USD (USA)", "KZT (Kazakhstan)"]
         self.Value1ComboBox.addItems(self.list_of_values)
         self.list_values_combobox2 = []
         self.reverseCounter = 1
@@ -323,6 +377,8 @@ class UnitedChangerMainWindow(QDialog):
         for el in self.list_of_values:
             checkbox = QCheckBox(el)
             checkbox.stateChanged.connect(self.update_selected_options)
+            if el in self.liked_values:
+                checkbox.setChecked(True)
             self.checkbox_layout.addWidget(checkbox)
         self.scrollArea.setWidget(self.checkbox_container)
         self.Converter1ComboBox.addItems(self.list_of_values)
@@ -376,19 +432,22 @@ class UnitedChangerMainWindow(QDialog):
             QMessageBox.critical(self, "Error", "You should fill Filename label!")
 
     def update_selected_options(self):
-        if self.sender().isChecked():
+        if self.sender().isChecked() and self.sender().text() not in self.liked_values:
             self.liked_values.append(self.sender().text())
-            # connFavoriteId = sqlite3.connect("databases/users.sqlite")
-            # cursorFavoriteId = connFavoriteId.cursor()
-            # print(1)
-            # print(", ".join(self.liked_values))
-            # cursorFavoriteId.execute("INSERT INTO favorite_values (id, favoriteValues) VALUES (?, ?)",
-            #                          (1, ", ".join(self.liked_values)))
-            # print(2)
-            # connFavoriteId.commit()
-            # connFavoriteId.close()
-        else:
+        elif not self.sender().isChecked():
             self.liked_values.remove(self.sender().text())
+        conn = sqlite3.connect('databases/users.sqlite')
+        cursor = conn.cursor()
+        if "null" in self.liked_values:
+            self.liked_values.remove("null")
+        if "" in self.liked_values:
+            self.liked_values.remove("")
+        new_text = ", ".join(self.liked_values)
+        cursor.execute(f"""
+                    INSERT INTO favorite_values_table (id, favoriteValues) VALUES ({self.id}, ?) 
+                    ON CONFLICT(id) DO UPDATE SET favoriteValues = ?""", (new_text, new_text))
+        conn.commit()
+        conn.close()
         self.update_combobox_labels()
 
     def update_combobox_labels(self):
@@ -419,12 +478,8 @@ class UnitedChangerMainWindow(QDialog):
 
     def globalConverter(self):
         self.ConvertationResult.setText(str(CurrencyConverter(self.Converter1ComboBox.currentText().split()[0]).
-         XtoYconverter(self.Converter2ComboBox.currentText().split()[0], self.DoubleSpinConverterBox.value())))
-
-    def settingsRunner(self):
-        self.settingsOpener = SettingWindow()
-        self.settingsOpener.show()
-        self.close()
+                                            XtoYconverter(self.Converter2ComboBox.currentText().split()[0],
+                                                          self.DoubleSpinConverterBox.value())))
 
     def viewRunner(self):
         if self.FilenameLine.text():
@@ -533,7 +588,7 @@ class ViewWindow(QDialog):
                 data = list(reader)
             self.UnitedMainReopener = None
             self.ViewTable.setColumnCount(
-               len(data[0]))
+                len(data[0]))
             self.ViewTable.setRowCount(len(data))
             for row_index, row_data in enumerate(data):
                 for col_index, cell_data in enumerate(row_data):
@@ -543,19 +598,7 @@ class ViewWindow(QDialog):
             header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
             self.ViewTable.resizeRowsToContents()
         except Exception as error:
-            print(error)
-
-    def closeEvent(self, event):
-        self.UnitedMainReopener = UnitedChangerMainWindow()
-        self.UnitedMainReopener.show()
-
-
-class SettingWindow(QDialog):
-    def __init__(self):
-        super(QDialog, self).__init__()
-        file = io.StringIO(SettingWindowTemplate)
-        uic.loadUi(file, self)
-        self.UnitedMainReopener = None
+            pass
 
     def closeEvent(self, event):
         self.UnitedMainReopener = UnitedChangerMainWindow()
