@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import yfinance as yf
 import pandas as pd
 from PyQt6.QtWidgets import QCheckBox, QTableWidgetItem, QHeaderView
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
@@ -123,7 +123,8 @@ class LoginWindow(QDialog):
         self.registrationProcess = None
         self.runRememberingProcess = None
         self.mainUnitedChanger = None
-        self.setWindowTitle("Login to UnitedChanger")
+        self.setWindowTitle("LoginWindow")
+        self.setFixedSize(387, 506)
         self.pixmapLogo = QPixmap("images/LoginWindowLogo.png")
         self.LabelLogo.setPixmap(self.pixmapLogo)
         self.RegistrationButton.clicked.connect(self.runRegisterWindow)
@@ -136,6 +137,10 @@ class LoginWindow(QDialog):
         self.close()
 
     def runForgotPasswordWindow(self):
+        QMessageBox.information(self, "InformationBeforeUsing", "This Window is not fully programmed. "
+                                                                "Use it for your own scare and risk.")
+        QMessageBox.information(self, "InformationBeforeUsing", "Also, if you have questions with using,"
+                                                                "look for TechnicalTask.")
         self.runRememberingProcess = ForgotPasswordWindow()
         self.runRememberingProcess.show()
         self.close()
@@ -165,17 +170,19 @@ class LoginWindow(QDialog):
             logins = []
             for el in logins_loaded:
                 logins.append(el[0])
+            login = self.LoginLine.text()
+            password_entered = self.PasswordLine.text()
+            if not validate_email.validate_email(login):
+                raise NotValidEmail
+            if login not in logins:
+                raise IncorrectData
             conn = sqlite3.connect("databases/users.sqlite")
             cursor = conn.cursor()
             cursor.execute(f"SELECT password FROM users_table WHERE login='{self.LoginLine.text()}'")
             password = cursor.fetchall()[0]
             conn.commit()
             conn.close()
-            login = self.LoginLine.text()
-            password_entered = self.PasswordLine.text()
-            if not validate_email.validate_email(login):
-                raise NotValidEmail
-            if login not in logins or password_entered != password[0]:
+            if password_entered != password[0]:
                 raise IncorrectData
             with open("logs/logs.txt", mode="a", encoding="UTF-8") as file:
                 file.write(f"{datetime.now()}; {login} entered.\n")
@@ -208,7 +215,10 @@ class RegisterWindow(QDialog):
         uic.loadUi(file, self)
         self.LoginWindowReopener = None
         self.CriticalError = "CriticalError"
-        self.setWindowTitle("Registration")
+        self.setWindowTitle("RegisterWindow")
+        self.setFixedSize(389, 506)
+        self.pixmapLogo = QPixmap("images/LoginWindowLogo.png")
+        self.LabelLogo.setPixmap(self.pixmapLogo)
         self.RegisterButton.clicked.connect(self.registration)
 
     @staticmethod
@@ -291,7 +301,10 @@ class ForgotPasswordWindow(QDialog):
         file = io.StringIO(ForgotPasswordWindowTemplate)
         uic.loadUi(file, self)
         self.LoginWindowReopener = None
-        self.setWindowTitle("Don't forget you password again =)")
+        self.setWindowTitle("ForgotPasswordWindow")
+        self.setFixedSize(460, 195)
+        self.pixmapLogo = QPixmap("images/ForgotPasswordLogo.png")
+        self.label.setPixmap(self.pixmapLogo)
         self.TimeLabel.hide()
         self.rememberButton.clicked.connect(self.rememberProcess)
 
@@ -339,6 +352,8 @@ class UnitedChangerMainWindow(QDialog):
         self.value2Logo = None
         self.viewOpener = None
         self.loadingOpener = None
+        self.setWindowTitle("UnitedChanger")
+        self.setFixedSize(1147, 636)
         self.pixmapLogo = QPixmap("images/MainWindowLogo.png")
         self.LogotypeLabel.setPixmap(self.pixmapLogo)
         self.viewButton.clicked.connect(self.viewRunner)
@@ -387,12 +402,18 @@ class UnitedChangerMainWindow(QDialog):
         self.ConvertButton.clicked.connect(self.globalConverter)
         self.ConvertationResult.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.LikedInCsvButton.clicked.connect(self.csvLikedSaver)
+        self.settingsButton.clicked.connect(self.settingsRunner)
+
+    def settingsRunner(self):
+        QMessageBox.information(self, "Information", "This Window is not ready yet. Check up TechTask"
+                                                     " for more information.")
 
     def csvLikedSaver(self):
         try:
             if not self.FilenameLine.text():
                 raise FieldsAreNotFilled
             currencies = [el.split()[0] for el in self.liked_values]
+
             def get_exchange_rate(base, target):
                 url = f"https://api.coinbase.com/v2/prices/{base}-{target}/spot"
                 response = requests.get(url)
@@ -401,6 +422,7 @@ class UnitedChangerMainWindow(QDialog):
                 else:
                     print(f"Error fetching data for {base}-{target}")
                     return base, target, None
+
             data = {base: {target: None for target in currencies} for base in currencies}
             with ThreadPoolExecutor(max_workers=10) as executor:
                 tasks = []
@@ -580,6 +602,8 @@ class ViewWindow(QDialog):
             super(QDialog, self).__init__()
             file = io.StringIO(ViewWindowTemplate)
             uic.loadUi(file, self)
+            self.setWindowTitle("ViewWindow")
+            self.setFixedSize(1060, 502)
             self.UnitedMainReopener = None
             if filename[-4::] != ".csv":
                 filename += ".csv"

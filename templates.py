@@ -133,26 +133,28 @@ LoginWindowTemplate = """<?xml version="1.0" encoding="UTF-8"?>
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>0</y>
+     <y>10</y>
      <width>271</width>
      <height>81</height>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">border: 1px solid black;
-border-radius: 10px;</string>
+    <string notr="true"/>
    </property>
    <property name="text">
     <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>../images/LoginWindowLogo.png</pixmap>
    </property>
   </widget>
   <widget class="QLabel" name="LoginLabel">
    <property name="geometry">
     <rect>
      <x>70</x>
-     <y>90</y>
+     <y>100</y>
      <width>231</width>
-     <height>61</height>
+     <height>51</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -178,11 +180,17 @@ border-radius: 10px;
 background-color: rgb(231, 231, 231);
 border: 1px solid rgb(0, 0, 0);</string>
    </property>
+   <property name="inputMask">
+    <string/>
+   </property>
    <property name="text">
     <string/>
    </property>
    <property name="echoMode">
     <enum>QLineEdit::Normal</enum>
+   </property>
+   <property name="placeholderText">
+    <string>Login...</string>
    </property>
   </widget>
   <widget class="QLabel" name="PasswordLabel">
@@ -222,6 +230,9 @@ border: 1px solid rgb(0, 0, 0);</string>
    </property>
    <property name="echoMode">
     <enum>QLineEdit::Password</enum>
+   </property>
+   <property name="placeholderText">
+    <string>Password...</string>
    </property>
   </widget>
   <widget class="QPushButton" name="EnterButton">
@@ -449,6 +460,25 @@ border: 1px solid rgb(0, 0, 0);</string>
     <string>Password...</string>
    </property>
   </widget>
+  <widget class="QLabel" name="LabelLogo">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>20</y>
+     <width>281</width>
+     <height>81</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>../images/LoginWindowLogo.png</pixmap>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>
@@ -463,7 +493,7 @@ ForgotPasswordWindowTemplate = """<?xml version="1.0" encoding="UTF-8"?>
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>459</width>
+    <width>460</width>
     <height>195</height>
    </rect>
   </property>
@@ -546,7 +576,7 @@ border: 1px solid rgb(0, 0, 0);</string>
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>340</x>
+     <x>350</x>
      <y>10</y>
      <width>91</width>
      <height>61</height>
@@ -554,6 +584,9 @@ border: 1px solid rgb(0, 0, 0);</string>
    </property>
    <property name="text">
     <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>../images/ForgotPasswordLogo.png</pixmap>
    </property>
   </widget>
  </widget>

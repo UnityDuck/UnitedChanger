@@ -152,6 +152,25 @@ border: 1px solid rgb(0, 0, 0);</string>
     <string>Password...</string>
    </property>
   </widget>
+  <widget class="QLabel" name="LabelLogo">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>20</y>
+     <width>281</width>
+     <height>81</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap>../images/LoginWindowLogo.png</pixmap>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>
