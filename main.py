@@ -275,6 +275,12 @@ class RegisterWindow(QDialog):
                                      (id_now, ""))
             connFavoriteId.commit()
             connFavoriteId.close()
+            connSettings = sqlite3.connect("databases/users.sqlite")
+            cursorSettings = connSettings.cursor()
+            cursorSettings.execute("INSERT INTO settings_table (id, color_scheme) VALUES (?, ?)",
+                                     (id_now, ""))
+            connSettings.commit()
+            connSettings.close()
             QMessageBox.about(self, "RegistrationEnding", "Registration is completed!")
             self.zeroMaker()
         except FieldsAreNotFilled:
